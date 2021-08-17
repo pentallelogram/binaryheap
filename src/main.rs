@@ -1,3 +1,5 @@
+#![feature(box_syntax)]
+#![feature(new_uninit)]
 use std::collections::BinaryHeap;
 //#![allow(incomplete_features)]
 //#![feature (const_generics)]
@@ -129,15 +131,19 @@ impl BinaryHeapOurs {
 
 struct BinaryHeapFast {
     // The underlying data of the binary heap
-    data: Vec<u32>,
+    data: Box<[u32; 1024*1024]>,
+    in_use: usize,
 }
 
 impl BinaryHeapFast {
     fn new() -> Self {
-        Self { data: Vec::with_capacity(1024 * 1024) }
+        let contents = Box::<[u32; 1024*1024]>::new_zeroed();
+        let contents = unsafe { contents.assume_init() };
+        Self { data: contents, in_use: 0 }
     }
 
     fn insert(&mut self, val: u32) {
+        /*
         // where the value currently is
         let mut idx = self.data.len();
 
@@ -158,9 +164,12 @@ impl BinaryHeapFast {
                 break;
             }
         }
+        */
     }
 
     fn pop_min(&mut self) -> Option<u32> {
+        None
+    /*
 
         if let Some(mut ret) = self.data.pop() {
             // can't remove from an empty heap
@@ -205,6 +214,7 @@ impl BinaryHeapFast {
             None
         }
 
+    */
     }
 }
 
@@ -252,7 +262,8 @@ fn main() {
 
         let it = rdtsc();
         for _ in 0..iters {
-            fbh.data.clear();
+            fbh.in_use = 0;
+            //fbh.data.clear();
 
             for _ in 0..size {
                 fbh.insert(rng_fast.next_u32());
